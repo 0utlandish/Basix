@@ -36,7 +36,7 @@ async function main() {
 		requestAnimationFrame(animate);
 		const delta = elapsed - cache;
 		cache = elapsed;
-		p1.x += 0.01;
+		p1.anchor.x += 1;
 		// camera.y += 1;
 		scene.refill('#111').update(camera);
 	}; animate();
