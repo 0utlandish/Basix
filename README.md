@@ -13,7 +13,7 @@ it's very easey to insatll and get started with the Basix engine, download `basi
 #### Loops
 there are two loops in the Basix structure, internal loop and external loop.
 ##### Internal Loop
-this is is built in the source code and you can not access it, it mostly handles easing functions and provide time measurements like `delta` and `now`[global: util.now] for the external loop (uses requestAnimationFrame).
+this is is built in the source code and you can not access it, it mostly handles easing functions and provide time measurements like `delta` and `now`[global: `util.now`] for the external loop (uses requestAnimationFrame).
 ##### External Loop
 this loop is for user to render the application in, you can access this loop from `util` object : 
 ``` js
