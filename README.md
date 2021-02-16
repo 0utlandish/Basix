@@ -22,3 +22,12 @@ this loop is for user to render his application in, you can access this loop lik
     // draw your objects here
   }
 ```
+#### Scene
+scene is the container that holds your objects in it, for objects to be displayed, they should exist inside a scene, you can create a scene using BASIX.scene constructor: 
+``` js 
+  import { util, scene } from 'basix.js';
+  const _scene = new scene({options})
+  util.loop = (delta, elapsed) => {
+    // draw your objects here
+  }
+```
