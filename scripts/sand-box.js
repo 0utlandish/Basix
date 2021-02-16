@@ -11,7 +11,30 @@ async function main() {
 		mirrory: true,
 	});
 
-	scene.add(new BASIX.axis());
+	const rect1 = {
+		x: 0, y: 0, size: 100,
+		update: context => {
+			context.fillStyle = 'red';
+			context.fillRect(rect1.x, rect1.y, rect1.size, rect1.size);
+		}
+	}
+	const rect2 = {
+		x: 50, y: 50, size: 100,
+		update: context => {
+			context.fillStyle = 'blue';
+			context.fillRect(rect2.x, rect2.y, rect2.size, rect2.size);
+		}
+	}
+
+	const light = {
+		LIGHT: true,
+		radius: 1000,
+		x: 0, y: 0,
+		size: 10,
+		color: '#ffffff'
+	}
+
+	scene.add([light, rect1, rect2]);
 
 	const mouse = {
 		x: null,
@@ -23,21 +46,15 @@ async function main() {
 		mouse.y = (scene.origin.y) - e.clientY;
 	}
 
-	let p1 = BASIX.polygon.regular(0, 0, 4, 1, 100, {
-		color: '#4FC3F7'
+	console.log({scene, BASIX});
+
+	BASIX.util.loop = delta => {
+		scene.erase().update(camera);
+		// console.log(rect1.x)
+	}
+
+	let x = BASIX.util.ease(rect1, 'size', 300, 2000, 'easeInOutQuint', () => {
+		console.log('callback')
 	});
 
-	scene.add([p1])
-
-	// console.log(scene.storage)
-
-	let cache = 0;
-	const animate = (elapsed) => {
-		requestAnimationFrame(animate);
-		const delta = elapsed - cache;
-		cache = elapsed;
-		p1.anchor.x += 1;
-		// camera.y += 1;
-		scene.refill('#111').update(camera);
-	}; animate();
 }; main();

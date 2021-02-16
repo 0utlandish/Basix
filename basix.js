@@ -1,4 +1,49 @@
 
+// basix utility stuff
+export const util = {
+	// user can use this loop to implement the logic and render objects
+	loop: e=>{},
+	// linear interpolation (yea i know)
+	lerp: (a, b, n) => {
+		return a + (b - a) * Math.min(1, Math.max(0, n));
+	},
+	// store time in ms since loop is running
+	now: 0,
+	// ease value change
+	ease(o, p, v, d, t = 'linear', c) {
+		const ease = {
+			startedAt: (util.now || 0),
+			endsAt: (util.now || 0) + d,
+			initialValue: o[p],
+			o, p, v, t, c
+		};
+		util.easeStorage.push(ease);
+		return {
+			stop: (f = false) => {
+				util.easeStorage = util.easeStorage.filter(e => e != ease);
+				if (f)
+					ease.c();
+			}
+		}
+	},
+	easeStorage: [],
+	easeTypes: {
+	  linear: t => t,
+	  easeInQuad: t => t*t,
+	  easeOutQuad: t => t*(2-t),
+	  easeInOutQuad: t => t<.5 ? 2*t*t : -1+(4-2*t)*t,
+	  easeInCubic: t => t*t*t,
+	  easeOutCubic: t => (--t)*t*t+1,
+	  easeInOutCubic: t => t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1,
+	  easeInQuart: t => t*t*t*t,
+	  easeOutQuart: t => 1-(--t)*t*t*t,
+	  easeInOutQuart: t => t<.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t,
+	  easeInQuint: t => t*t*t*t*t,
+	  easeOutQuint: t => 1+(--t)*t*t*t*t,
+	  easeInOutQuint: t => t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t
+	},
+};
+
 // represent a 2D vector
 export class vector2 {
    constructor(dx = 0, dy = 0) {
@@ -147,8 +192,8 @@ export class scene {
       this.origin.x   = origin.x;
       this.origin.y   = origin.y;
       // if lighting is true then this will create a layer of darkness above every thing
-      this.lighting = lighting;
-      this.darknesh = null;
+      this.lighting   = lighting;
+      this.darknesh   = 1;
 
    }
    // add a new element to the scene in order to display it
@@ -185,11 +230,13 @@ export class scene {
    }
    // erase the canvas (aka clear)
    erase() {
+   	this.context.globalCompositeOperation = 'source-over';
       this.context.clearRect(0, 0, this.width, this.height);
       return this;
    }
    // fill canvas with a color
    refill(color = this.backgroundColor) {
+   	this.context.globalCompositeOperation = 'source-over';
       this.context.fillStyle = color;
       this.context.fillRect(0, 0, this.width, this.height);
       this.context.fill();
@@ -198,10 +245,21 @@ export class scene {
    // update all visible elements in the storage
    update(camera) {
       if (!camera) return;
+      this.darknesh++;
       this.context.translate(camera.x + this.origin.x, camera.y + this.origin.y);
       this.context.scale(camera.scale, camera.scale);
       this.context.scale((camera.mirrorx ? -1 : 1), (camera.mirrory ? -1 : 1));
       this.context.rotate(camera.rotation);
+      this.lights.forEach(light => {
+	      const grd = this.context.createRadialGradient(light.x, light.y, light.size, light.x, light.y, light.radius);
+			grd.addColorStop(0, light.color + "ff");
+			grd.addColorStop(1, light.color + "00");
+	      this.context.fillStyle = grd;
+	      this.context.beginPath();
+	      this.context.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
+	      this.context.fill();
+      });
+      this.context.globalCompositeOperation = 'source-atop';
       this.storage.sort(function(Element1, Element2) {
          if ((Element1.z === undefined ? 0 : Element1.z) < (Element2.z === undefined ? 0 : Element2.z)) return -1;
          else return 1;
@@ -214,6 +272,7 @@ export class scene {
       this.context.scale((camera.mirrorx ? -1 : 1), (camera.mirrory ? -1 : 1));
       this.context.scale(1/camera.scale, 1/camera.scale);
       this.context.translate(-camera.x - this.origin.x, -camera.y - this.origin.y);
+      return this;
    }
 };
 
@@ -243,3 +302,20 @@ export class camera {
       this.y = -lookPointY;
    }
 }
+
+// basix internal loop starts here
+const internalLoop = (elapsed) => {
+	requestAnimationFrame(internalLoop);
+	const delta = elapsed - util.now;
+	util.now = elapsed;
+	if (!isNaN(delta)){ 
+		util.loop(delta, elapsed);
+		util.easeStorage.forEach(ease => {
+			ease.o[ease.p] = util.lerp(ease.initialValue, ease.v, util.easeTypes[ease.t]((util.now - ease.startedAt) / (ease.endsAt - ease.startedAt)));
+			if (util.now >= ease.endsAt) {
+				util.easeStorage = util.easeStorage.filter(e => e != ease);
+				ease.c();
+			}
+		});
+	}
+}; internalLoop();
